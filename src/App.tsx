@@ -6,7 +6,7 @@ type Status = "idle" | "pending" | "resolved";
 function App() {
   const [status, setSatus] = useState<Status>("idle");
 
-  const promiseFunction = async () => {
+  const suspendCallback = async () => {
     await sleep(1000);
 
     setSatus("resolved");
@@ -24,7 +24,7 @@ function App() {
       <Suspense fallback={<div>서스펜스 중...</div>}>
         <Content
           shouldSuspend={status === "pending"}
-          promiseFunction={promiseFunction}
+          suspendCallback={suspendCallback}
         />
       </Suspense>
     </main>
@@ -33,13 +33,13 @@ function App() {
 
 type ContentProps = {
   shouldSuspend: boolean;
-  promiseFunction: () => Promise<void>;
+  suspendCallback: () => Promise<void>;
 };
 
-const Content = ({ shouldSuspend, promiseFunction }: ContentProps) => {
+const Content = ({ shouldSuspend, suspendCallback }: ContentProps) => {
   useSuspend({
+    callback: suspendCallback,
     shouldSuspend,
-    promiseFunction,
   });
 
   return <div>컨텐츠</div>;

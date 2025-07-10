@@ -1,11 +1,11 @@
 export const useSuspend = ({
+  callback,
   shouldSuspend,
-  promiseFunction,
 }: {
+  callback: () => Promise<void>;
   shouldSuspend: boolean;
-  promiseFunction: () => Promise<void>;
 }) => {
   if (shouldSuspend) {
-    throw promiseFunction();
+    throw callback();
   }
 };
