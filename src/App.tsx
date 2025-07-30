@@ -20,6 +20,16 @@ const Content = () => {
     queryFn: getPostList,
   });
 
+  const { data: posts2 } = useSuspend({
+    key: "posts",
+    queryFn: getPostList,
+  });
+
+  const { data: posts3 } = useSuspend({
+    key: "posts",
+    queryFn: getPostList,
+  });
+
   const { data: comments } = useSuspend({
     key: "comments",
     queryFn: getCommentList,
@@ -28,6 +38,8 @@ const Content = () => {
   return (
     <div>
       {JSON.stringify(posts)}
+      {JSON.stringify(posts2)}
+      {JSON.stringify(posts3)}
       {JSON.stringify(comments)}
     </div>
   );
@@ -40,7 +52,9 @@ const sleep = (ms: number) => {
 };
 
 const getPostList = async () => {
+  console.log("게시글 목록을 가져오는 중...");
   await sleep(2000);
+
   return [
     { id: "1", title: "게시글 1" },
     { id: "2", title: "게시글 2" },
@@ -48,6 +62,7 @@ const getPostList = async () => {
 };
 
 const getCommentList = async () => {
+  console.log("댓글 목록을 가져오는 중...");
   await sleep(2000);
 
   return [

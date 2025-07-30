@@ -1,5 +1,6 @@
 type QueryResult<TData, TError = unknown> =
-  | { status: "pending" }
+  | { status: "idle" }
+  | { status: "pending"; promise: Promise<TData> }
   | { status: "resolved"; data: TData }
   | { status: "rejected"; error: TError };
 
@@ -24,17 +25,14 @@ export const createQueryObserver = <TData>(
   const queryCacheEntry = queryCache.get(queryOptions.key);
 
   const entry = queryCacheEntry ?? {
-    result: { status: "pending" },
+    result: { status: "idle" },
     listeners: new Set<() => void>(),
   };
 
   const listeners = entry.listeners;
 
   if (!queryCacheEntry) {
-    queryCache.set(queryOptions.key, {
-      result: { status: "pending" },
-      listeners,
-    });
+    queryCache.set(queryOptions.key, entry);
   }
 
   const subscribe = (listener: () => void) => {
@@ -49,15 +47,32 @@ export const createQueryObserver = <TData>(
     listeners.forEach((listener) => listener());
   };
 
-  const fetchOptimistic = async <TData>(options: QueryOptions<TData>) => {
-    try {
-      const data = await options.queryFn();
-      entry.result = { status: "resolved", data };
-    } catch (error) {
-      entry.result = { status: "rejected", error };
-    } finally {
-      notifyListeners();
+  const fetchOptimistic = <TData>(options: QueryOptions<TData>) => {
+    const existingEntry = queryCache.get(options.key);
+
+    if (existingEntry && existingEntry.result.status === "pending") {
+      return existingEntry.result.promise;
     }
+
+    const fetchPromise = new Promise<TData>((resolve, reject) => {
+      options
+        .queryFn()
+        .then((data) => {
+          resolve(data);
+          entry.result = { status: "resolved", data };
+          notifyListeners();
+        })
+        .catch((error) => {
+          reject(error);
+          entry.result = { status: "rejected", error };
+          notifyListeners();
+        });
+    });
+
+    entry.result = { status: "pending", promise: fetchPromise };
+    notifyListeners();
+
+    return fetchPromise;
   };
 
   const getCurrentResult = () => {

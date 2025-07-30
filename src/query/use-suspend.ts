@@ -12,7 +12,7 @@ export const useSuspend = <TData>(
 
   const result = observer.getCurrentResult();
 
-  if (result.status === "pending") {
+  if (result.status === "idle" || result.status === "pending") {
     throw observer.fetchOptimistic(queryOptions);
   }
 
